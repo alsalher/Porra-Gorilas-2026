@@ -84,6 +84,12 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
 .hidden{display:none}
 .gtable{font-size:12px;width:100%;background:transparent;border:none}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:12px 0}
+.ghead{font-family:'Saira Condensed';font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.gbadge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px}
+.gbadge.def{background:var(--green);color:#081A10}
+.gbadge.prov{background:var(--panel2);color:var(--amber);border:1px solid var(--amber)}
+.gtable tr.q td{color:var(--cyan);font-weight:600}
 .gtable td,.gtable th{padding:3px 6px;border:none;font-size:12px}
 .dist{display:flex;gap:2px}
 .dcell{width:22px;height:20px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono';font-size:10px;border-radius:3px;background:var(--cyan);color:#081A10}
@@ -104,6 +110,7 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
 <div class="tabs">
   <button class="tab on" data-p="matches">Partidos</button>
   <button class="tab" data-p="rank">Ranking</button>
+  <button class="tab" data-p="groups">Grupos</button>
   <button class="tab" data-p="admin">Admin</button>
 </div>
 
@@ -124,6 +131,10 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
   <div style="overflow-x:auto"><table id="rankTable"></table></div>
   <div id="probBox"></div>
   <div class="note" style="margin-top:14px"><b>Cómo se puntúa.</b> Grupos: signo 1 + diferencia 1 + exacto 1 (se suman), posición exacta en el grupo 1 por equipo, clasificado a dieciseisavos 2 por equipo. Eliminatorias (solo si aciertas el cruce exacto): 16avos y octavos 2+1+1, cuartos 4+2+2, semis y 3º-4º 8+4+4, final 16+8+8. Clasificados: a octavos 4, a cuartos 8, a semis 16, a la final 32 por equipo. Campeón 50, subcampeón 25, tercero 10. Botas y Balón (oro/plata/bronce): 10/6/4.</div>
+</section>
+
+<section class="panel" id="p-groups">
+  <div id="groupsBox"></div>
 </section>
 
 <section class="panel" id="p-admin">
@@ -860,8 +871,71 @@ async function wipe(){
   await saveState(true);renderAdmin();
 }
 
+// ---------- grupos: clasificación en vivo y puntos teóricos ----------
+function groupTable(g){
+  const ms=Object.values(DATA.fixtures).filter(f=>f.g===g);
+  const tab={}; GRP[g].forEach(t=>tab[t]={t,pj:0,pts:0,gf:0,ga:0});
+  let played=0;
+  ms.forEach(f=>{const r=STATE.results[f.n]; if(!r)return; played++;
+    tab[f.home].pj++;tab[f.away].pj++;
+    tab[f.home].gf+=r.h;tab[f.home].ga+=r.a;tab[f.away].gf+=r.a;tab[f.away].ga+=r.h;
+    if(r.h>r.a)tab[f.home].pts+=3;else if(r.a>r.h)tab[f.away].pts+=3;else{tab[f.home].pts++;tab[f.away].pts++;}});
+  const arr=Object.values(tab);arr.forEach(o=>o.gd=o.gf-o.ga);
+  arr.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||a.t.localeCompare(b.t));
+  return {arr,played,total:ms.length};
+}
+function groupMemberPts(g,order){
+  const out={};
+  for(const k of PKEYS){const P=DATA.players[k];
+    let pos=0; for(let i=0;i<4;i++) if(P.pos[g]&&P.pos[g][i]===order[i]) pos++;
+    let clas=0; for(let i=0;i<2;i++){const t=order[i]; if(P.r32&&P.r32.includes(t)) clas+=CLAS.r32;}
+    out[k]={pos,clas,total:pos+clas};
+  }
+  return out;
+}
+function renderGroups(){
+  const box=document.getElementById("groupsBox"); if(!box)return;
+  const groups=Object.keys(GRP).sort();
+  const agg={}; PKEYS.forEach(k=>agg[k]={pos:0,clas:0,total:0});
+  const perGroup={}; let defCount=0;
+  groups.forEach(g=>{
+    const {arr,played,total}=groupTable(g);
+    const order=arr.map(o=>o.t);
+    const def=played===total;
+    const mp=played>0?groupMemberPts(g,order):null;
+    perGroup[g]={arr,played,total,mp,def};
+    if(def)defCount++;
+    if(mp)PKEYS.forEach(k=>{agg[k].pos+=mp[k].pos;agg[k].clas+=mp[k].clas;agg[k].total+=mp[k].total;});
+  });
+  let html=`<div class="note">Clasificación de cada grupo según los resultados ya jugados, y los <b>puntos teóricos</b> que sumaría cada miembro si esas posiciones fueran definitivas: 1 punto por puesto acertado + ${CLAS.r32} por cada equipo del <b>Top-2</b> que predijo clasificado a dieciseisavos. <b style="color:var(--green)">${defCount}/${groups.length}</b> grupos con clasificación definitiva (todos sus partidos jugados). Las posiciones pueden estar matemáticamente aseguradas antes, pero solo se marcan definitivas al jugarse los 6 partidos.</div>`;
+  const aggArr=PKEYS.map(k=>({k,name:STATE.names[k]||k,...agg[k]})).sort((a,b)=>b.total-a.total);
+  html+=`<div class="dayhead" style="color:var(--amber);margin-top:8px">Puntos teóricos de fase de grupos (total)</div>`;
+  html+=`<div style="overflow-x:auto"><table><tr><th>#</th><th>Miembro</th><th>Posiciones</th><th>Clasificados</th><th>Total</th></tr>`;
+  aggArr.forEach((r,i)=>{html+=`<tr class="${i===0?'first':''}"><td>${i+1}</td><td>${esc(r.name)}</td><td>${r.pos}</td><td>${r.clas}</td><td style="font-weight:700;color:var(--cyan)">${r.total}</td></tr>`;});
+  html+=`</table></div>`;
+  groups.forEach(g=>{
+    const G=perGroup[g];
+    const badge=G.def?`<span class="gbadge def">DEFINITIVA</span>`:`<span class="gbadge prov">PROVISIONAL</span>`;
+    html+=`<div class="gcard"><div class="ghead">Grupo ${g}${badge} <span class="mute" style="font-weight:400;font-size:12px">${G.played}/${G.total} jugados</span></div>`;
+    html+=`<table class="gtable"><tr><th>#</th><th style="text-align:left">Equipo</th><th>PJ</th><th>Pts</th><th>DG</th><th>GF</th></tr>`;
+    G.arr.forEach((o,i)=>{html+=`<tr class="${i<2?'q':''}"><td>${i+1}</td><td style="text-align:left">${esc(o.t)}</td><td>${o.pj}</td><td style="font-weight:700">${o.pts}</td><td>${o.gd>0?'+':''}${o.gd}</td><td>${o.gf}</td></tr>`;});
+    html+=`</table>`;
+    if(G.mp){
+      const ord=PKEYS.map(k=>({k,name:STATE.names[k]||k,...G.mp[k]})).sort((a,b)=>b.total-a.total);
+      html+=`<div class="mute" style="margin:10px 0 4px">Puntos teóricos por miembro en este grupo</div>`;
+      html+=`<table class="gtable"><tr><th style="text-align:left">Miembro</th><th>Pos.</th><th>Clas.</th><th>Total</th></tr>`;
+      ord.forEach(r=>{html+=`<tr><td style="text-align:left">${esc(r.name)}</td><td>${r.pos}</td><td>${r.clas}</td><td style="font-weight:700;color:var(--cyan)">${r.total}</td></tr>`;});
+      html+=`</table>`;
+    } else {
+      html+=`<div class="mute" style="margin-top:10px">Aún sin partidos jugados en este grupo: no hay puntos teóricos todavía.</div>`;
+    }
+    html+=`</div>`;
+  });
+  box.innerHTML=html;
+}
+
 // ---------- general ----------
-function render(){CALC=computeAll();renderMatches();renderRank();setStatus(STORE_OK);}
+function render(){CALC=computeAll();renderMatches();renderRank();renderGroups();setStatus(STORE_OK);}
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("on"));
