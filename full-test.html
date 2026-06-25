@@ -84,16 +84,7 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
 .hidden{display:none}
 .gtable{font-size:12px;width:100%;background:transparent;border:none}
-.gcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:12px 0}
-.ghead{font-family:'Saira Condensed';font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-.gbadge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px}
-.gbadge.def{background:var(--green);color:#081A10}
-.gbadge.prov{background:var(--panel2);color:var(--amber);border:1px solid var(--amber)}
-.gtable tr.q td{color:var(--cyan);font-weight:600}
 .gtable td,.gtable th{padding:3px 6px;border:none;font-size:12px}
-.dist{display:flex;gap:2px}
-.dcell{width:22px;height:20px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono';font-size:10px;border-radius:3px;background:var(--cyan);color:#081A10}
-.mute{color:var(--mute);font-size:12px}
 @media (max-width:640px){ .tname{font-size:17px} h1{font-size:26px} }
 </style>
 </head>
@@ -110,7 +101,6 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
 <div class="tabs">
   <button class="tab on" data-p="matches">Partidos</button>
   <button class="tab" data-p="rank">Ranking</button>
-  <button class="tab" data-p="groups">Grupos</button>
   <button class="tab" data-p="admin">Admin</button>
 </div>
 
@@ -129,12 +119,7 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
 <section class="panel" id="p-rank">
   <div class="note" id="rankNote"></div>
   <div style="overflow-x:auto"><table id="rankTable"></table></div>
-  <div id="probBox"></div>
   <div class="note" style="margin-top:14px"><b>Cómo se puntúa.</b> Grupos: signo 1 + diferencia 1 + exacto 1 (se suman), posición exacta en el grupo 1 por equipo, clasificado a dieciseisavos 2 por equipo. Eliminatorias (solo si aciertas el cruce exacto): 16avos y octavos 2+1+1, cuartos 4+2+2, semis y 3º-4º 8+4+4, final 16+8+8. Clasificados: a octavos 4, a cuartos 8, a semis 16, a la final 32 por equipo. Campeón 50, subcampeón 25, tercero 10. Botas y Balón (oro/plata/bronce): 10/6/4.</div>
-</section>
-
-<section class="panel" id="p-groups">
-  <div id="groupsBox"></div>
 </section>
 
 <section class="panel" id="p-admin">
@@ -181,23 +166,7 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
       <div id="namesBox"></div>
     </div>
     <div class="admin-sec">
-      <h3>5 · Probabilidades (modelo)</h3>
-      <div class="row">
-        <span class="mute">Simulaciones:</span>
-        <input type="number" id="simN" value="4000" min="500" max="20000" step="500" style="width:80px">
-        <button class="btn" onclick="runProb(Math.max(500,Math.min(20000,parseInt(document.getElementById('simN').value)||4000)))">Calcular probabilidades</button>
-        <span class="mute" id="probProgAdm"></span>
-      </div>
-      <div class="row">
-        <label class="mute" style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="dynElo" onchange="toggleDyn(this.checked)"> Elo dinámico (ajustar fuerza con los resultados)</label>
-        <span class="mute">K:</span>
-        <input type="number" id="eloK" value="20" min="5" max="60" step="5" style="width:60px" onchange="setK(this.value)">
-      </div>
-      <div class="note">Simula los partidos que faltan con el modelo Poisson-Elo (respetando los ya jugados) y calcula la probabilidad de posición final de cada uno. El resultado se ve en la pestaña Ranking. En modo horneado (CSV) no se guarda en el almacén: cada visitante lo recalcula solo al abrir.<br><b>Elo dinámico:</b> revaloriza a cada selección tras sus partidos (sube quien gana, más si era desfavorecido o golea; baja quien pierde). K es la sensibilidad: bajo = prudente, alto = reactivo.</div>
-      <div style="overflow-x:auto;margin-top:8px"><div id="eloTable"></div></div>
-    </div>
-    <div class="admin-sec">
-      <h3>6 · Guardar y copias</h3>
+      <h3>5 · Guardar y copias</h3>
       <div class="row">
         <button class="btn" onclick="saveState(true)">Guardar y publicar</button>
         <button class="btn sec" onclick="showState()">Exportar (copiar estado)</button>
@@ -338,6 +307,7 @@ Match Number,Round Number,Date,Location,Home Team,Away Team,Group,Result
 //   actualizado <texto libre de fecha>
 const EXTRA_BAKED = `
 ===EXTRA===
+actualizado 25/06/2026 06:01
 nombre JOSE Longuetido
 nombre ALVARO Shalinoterreo
 Nombre David Sir Davos
@@ -346,7 +316,6 @@ nombre GUILLE Sanctus Guillermus
 Nombre Fran Frank Miunioz
 Nombre Juandi Juan el Dingo
 Nombre Migue Mr. Navajas
-actualizado 25/06/2026 06:01
 ===FINEXTRA===
 `;
 
@@ -368,7 +337,7 @@ const ES_NORM={}; ALLTEAMS.forEach(t=>ES_NORM[norm(t)]=t);
 function toES(name){const k=norm(name); if(ES_NORM[k])return ES_NORM[k]; if(EN2ES[k])return EN2ES[k]; return null;}
 
 // ---------- estado ----------
-let STATE={results:{},koTeams:{},honorsReal:["","","","","",""],names:{},updatedAt:null,useDynElo:true,eloK:20};
+let STATE={results:{},koTeams:{},honorsReal:["","","","","",""],names:{},updatedAt:null};
 PKEYS.forEach(k=>STATE.names[k]=DATA.players[k].name);
 let STORE_OK=false, ADMIN=false;
 const SKEY="gorilas-wc26-state";
@@ -529,147 +498,6 @@ function honMatch(a,b){
   return xt.some(t=>t.length>=4&&yt.includes(t));
 }
 
-
-// ===== Modelo Poisson-Elo: probabilidad de clasificación final =====
-const ELO={"México":1796,"Sudáfrica":1693,"Corea del Sur":1798,"República Checa":1764,"Canadá":1801,"Suiza":1855,"Catar":1683,"Bosnia y Herzegovina":1731,"Brasil":1980,"Marruecos":1879,"Escocia":1761,"Haití":1565,"Estados Unidos":1814,"Australia":1740,"Paraguay":1731,"Turquía":1801,"Alemania":1934,"Ecuador":1841,"Costa de Marfil":1789,"Curazao":1571,"Países Bajos":1954,"Japón":1842,"Túnez":1718,"Suecia":1800,"Bélgica":1936,"Irán":1797,"Egipto":1789,"Nueva Zelanda":1602,"España":2113,"Uruguay":1899,"Arabia Saudita":1683,"Cabo Verde":1621,"Francia":2066,"Senegal":1853,"Noruega":1834,"Irak":1639,"Argentina":2063,"Austria":1792,"Argelia":1771,"Jordania":1622,"Portugal":2002,"Colombia":1901,"Uzbekistán":1651,"RD Congo":1719,"Inglaterra":2001,"Croacia":1921,"Panamá":1679,"Ghana":1693};
-const HOSTSET=new Set(["México","Estados Unidos","Canadá"]);
-const THIRD_COL=["A","B","D","E","G","I","K","L"];
-const THIRD_COMBO={"ABCDEFGH":"HGBCAFDE","ABCDEFGI":"CGBDAFEI","ABCDEFGJ":"CGBDAFEJ","ABCDEFGK":"CGBDAFEK","ABCDEFGL":"CGBDAFLE","ABCDEFHI":"HEBCAFDI","ABCDEFHJ":"HJBCAFDE","ABCDEFHK":"HEBCAFDK","ABCDEFHL":"HFBCADLE","ABCDEFIJ":"CJBDAFEI","ABCDEFIK":"CEBDAFIK","ABCDEFIL":"CEBDAFLI","ABCDEFJK":"CJBDAFEK","ABCDEFJL":"CJBDAFLE","ABCDEFKL":"CEBDAFLK","ABCDEGHI":"HGBCADEI","ABCDEGHJ":"HGBCADEJ","ABCDEGHK":"HGBCADEK","ABCDEGHL":"HGBCADLE","ABCDEGIJ":"EGBCADIJ","ABCDEGIK":"EGBCADIK","ABCDEGIL":"EGBCADLI","ABCDEGJK":"EGBCADJK","ABCDEGJL":"EGBCADLJ","ABCDEGKL":"EGBCADLK","ABCDEHIJ":"HJBCADEI","ABCDEHIK":"HEBCADIK","ABCDEHIL":"HEBCADLI","ABCDEHJK":"HJBCADEK","ABCDEHJL":"HJBCADLE","ABCDEHKL":"HEBCADLK","ABCDEIJK":"EJBCADIK","ABCDEIJL":"EJBCADLI","ABCDEIKL":"EIBCADLK","ABCDEJKL":"EJBCADLK","ABCDFGHI":"HGBCAFDI","ABCDFGHJ":"HGBCAFDJ","ABCDFGHK":"HGBCAFDK","ABCDFGHL":"CGBDAFLH","ABCDFGIJ":"CGBDAFIJ","ABCDFGIK":"CGBDAFIK","ABCDFGIL":"CGBDAFLI","ABCDFGJK":"CGBDAFJK","ABCDFGJL":"CGBDAFLJ","ABCDFGKL":"CGBDAFLK","ABCDFHIJ":"HJBCAFDI","ABCDFHIK":"HFBCADIK","ABCDFHIL":"HFBCADLI","ABCDFHJK":"HJBCAFDK","ABCDFHJL":"CJBDAFLH","ABCDFHKL":"HFBCADLK","ABCDFIJK":"CJBDAFIK","ABCDFIJL":"CJBDAFLI","ABCDFIKL":"CIBDAFLK","ABCDFJKL":"CJBDAFLK","ABCDGHIJ":"HGBCADIJ","ABCDGHIK":"HGBCADIK","ABCDGHIL":"HGBCADLI","ABCDGHJK":"HGBCADJK","ABCDGHJL":"HGBCADLJ","ABCDGHKL":"HGBCADLK","ABCDGIJK":"CJBDAGIK","ABCDGIJL":"CJBDAGLI","ABCDGIKL":"IGBCADLK","ABCDGJKL":"CJBDAGLK","ABCDHIJK":"HJBCADIK","ABCDHIJL":"HJBCADLI","ABCDHIKL":"HIBCADLK","ABCDHJKL":"HJBCADLK","ABCDIJKL":"IJBCADLK","ABCEFGHI":"HGBCAFEI","ABCEFGHJ":"HGBCAFEJ","ABCEFGHK":"HGBCAFEK","ABCEFGHL":"HGBCAFLE","ABCEFGIJ":"EGBCAFIJ","ABCEFGIK":"EGBCAFIK","ABCEFGIL":"EGBCAFLI","ABCEFGJK":"EGBCAFJK","ABCEFGJL":"EGBCAFLJ","ABCEFGKL":"EGBCAFLK","ABCEFHIJ":"HJBCAFEI","ABCEFHIK":"HEBCAFIK","ABCEFHIL":"HEBCAFLI","ABCEFHJK":"HJBCAFEK","ABCEFHJL":"HJBCAFLE","ABCEFHKL":"HEBCAFLK","ABCEFIJK":"EJBCAFIK","ABCEFIJL":"EJBCAFLI","ABCEFIKL":"EIBCAFLK","ABCEFJKL":"EJBCAFLK","ABCEGHIJ":"HJBCAGEI","ABCEGHIK":"EGBCAHIK","ABCEGHIL":"EGBCAHLI","ABCEGHJK":"HJBCAGEK","ABCEGHJL":"HJBCAGLE","ABCEGHKL":"EGBCAHLK","ABCEGIJK":"EJBCAGIK","ABCEGIJL":"EJBCAGLI","ABCEGIKL":"EGBAICLK","ABCEGJKL":"EJBCAGLK","ABCEHIJK":"EJBCAHIK","ABCEHIJL":"EJBCAHLI","ABCEHIKL":"EIBCAHLK","ABCEHJKL":"EJBCAHLK","ABCEIJKL":"EJBAICLK","ABCFGHIJ":"HGBCAFIJ","ABCFGHIK":"HGBCAFIK","ABCFGHIL":"HGBCAFLI","ABCFGHJK":"HGBCAFJK","ABCFGHJL":"HGBCAFLJ","ABCFGHKL":"HGBCAFLK","ABCFGIJK":"CJBFAGIK","ABCFGIJL":"CJBFAGLI","ABCFGIKL":"IGBCAFLK","ABCFGJKL":"CJBFAGLK","ABCFHIJK":"HJBCAFIK","ABCFHIJL":"HJBCAFLI","ABCFHIKL":"HIBCAFLK","ABCFHJKL":"HJBCAFLK","ABCFIJKL":"IJBCAFLK","ABCGHIJK":"HJBCAGIK","ABCGHIJL":"HJBCAGLI","ABCGHIKL":"IGBCAHLK","ABCGHJKL":"HJBCAGLK","ABCGIJKL":"IJBCAGLK","ABCHIJKL":"IJBCAHLK","ABDEFGHI":"HGBDAFEI","ABDEFGHJ":"HGBDAFEJ","ABDEFGHK":"HGBDAFEK","ABDEFGHL":"HGBDAFLE","ABDEFGIJ":"EGBDAFIJ","ABDEFGIK":"EGBDAFIK","ABDEFGIL":"EGBDAFLI","ABDEFGJK":"EGBDAFJK","ABDEFGJL":"EGBDAFLJ","ABDEFGKL":"EGBDAFLK","ABDEFHIJ":"HJBDAFEI","ABDEFHIK":"HEBDAFIK","ABDEFHIL":"HEBDAFLI","ABDEFHJK":"HJBDAFEK","ABDEFHJL":"HJBDAFLE","ABDEFHKL":"HEBDAFLK","ABDEFIJK":"EJBDAFIK","ABDEFIJL":"EJBDAFLI","ABDEFIKL":"EIBDAFLK","ABDEFJKL":"EJBDAFLK","ABDEGHIJ":"HJBDAGEI","ABDEGHIK":"EGBDAHIK","ABDEGHIL":"EGBDAHLI","ABDEGHJK":"HJBDAGEK","ABDEGHJL":"HJBDAGLE","ABDEGHKL":"EGBDAHLK","ABDEGIJK":"EJBDAGIK","ABDEGIJL":"EJBDAGLI","ABDEGIKL":"EGBAIDLK","ABDEGJKL":"EJBDAGLK","ABDEHIJK":"EJBDAHIK","ABDEHIJL":"EJBDAHLI","ABDEHIKL":"EIBDAHLK","ABDEHJKL":"EJBDAHLK","ABDEIJKL":"EJBAIDLK","ABDFGHIJ":"HGBDAFIJ","ABDFGHIK":"HGBDAFIK","ABDFGHIL":"HGBDAFLI","ABDFGHJK":"HGBDAFJK","ABDFGHJL":"HGBDAFLJ","ABDFGHKL":"HGBDAFLK","ABDFGIJK":"FJBDAGIK","ABDFGIJL":"FJBDAGLI","ABDFGIKL":"IGBDAFLK","ABDFGJKL":"FJBDAGLK","ABDFHIJK":"HJBDAFIK","ABDFHIJL":"HJBDAFLI","ABDFHIKL":"HIBDAFLK","ABDFHJKL":"HJBDAFLK","ABDFIJKL":"IJBDAFLK","ABDGHIJK":"HJBDAGIK","ABDGHIJL":"HJBDAGLI","ABDGHIKL":"IGBDAHLK","ABDGHJKL":"HJBDAGLK","ABDGIJKL":"IJBDAGLK","ABDHIJKL":"IJBDAHLK","ABEFGHIJ":"HJBFAGEI","ABEFGHIK":"EGBFAHIK","ABEFGHIL":"EGBFAHLI","ABEFGHJK":"HJBFAGEK","ABEFGHJL":"HJBFAGLE","ABEFGHKL":"EGBFAHLK","ABEFGIJK":"EJBFAGIK","ABEFGIJL":"EJBFAGLI","ABEFGIKL":"EGBAIFLK","ABEFGJKL":"EJBFAGLK","ABEFHIJK":"EJBFAHIK","ABEFHIJL":"EJBFAHLI","ABEFHIKL":"EIBFAHLK","ABEFHJKL":"EJBFAHLK","ABEFIJKL":"EJBAIFLK","ABEGHIJK":"EJBAHGIK","ABEGHIJL":"EJBAHGLI","ABEGHIKL":"EGBAIHLK","ABEGHJKL":"EJBAHGLK","ABEGIJKL":"EJBAIGLK","ABEHIJKL":"EJBAIHLK","ABFGHIJK":"HJBFAGIK","ABFGHIJL":"HJBFAGLI","ABFGHIKL":"HGBAIFLK","ABFGHJKL":"HJBFAGLK","ABFGIJKL":"IJBFAGLK","ABFHIJKL":"HJBAIFLK","ABGHIJKL":"HJBAIGLK","ACDEFGHI":"HGECAFDI","ACDEFGHJ":"HGJCAFDE","ACDEFGHK":"HGECAFDK","ACDEFGHL":"HGFCADLE","ACDEFGIJ":"CGJDAFEI","ACDEFGIK":"CGEDAFIK","ACDEFGIL":"CGEDAFLI","ACDEFGJK":"CGJDAFEK","ACDEFGJL":"CGJDAFLE","ACDEFGKL":"CGEDAFLK","ACDEFHIJ":"HJECAFDI","ACDEFHIK":"HEFCADIK","ACDEFHIL":"HEFCADLI","ACDEFHJK":"HJECAFDK","ACDEFHJL":"HJFCADLE","ACDEFHKL":"HEFCADLK","ACDEFIJK":"CJEDAFIK","ACDEFIJL":"CJEDAFLI","ACDEFIKL":"CEIDAFLK","ACDEFJKL":"CJEDAFLK","ACDEGHIJ":"HGJCADEI","ACDEGHIK":"HGECADIK","ACDEGHIL":"HGECADLI","ACDEGHJK":"HGJCADEK","ACDEGHJL":"HGJCADLE","ACDEGHKL":"HGECADLK","ACDEGIJK":"EGJCADIK","ACDEGIJL":"EGJCADLI","ACDEGIKL":"EGICADLK","ACDEGJKL":"EGJCADLK","ACDEHIJK":"HJECADIK","ACDEHIJL":"HJECADLI","ACDEHIKL":"HEICADLK","ACDEHJKL":"HJECADLK","ACDEIJKL":"EJICADLK","ACDFGHIJ":"HGJCAFDI","ACDFGHIK":"HGFCADIK","ACDFGHIL":"HGFCADLI","ACDFGHJK":"HGJCAFDK","ACDFGHJL":"CGJDAFLH","ACDFGHKL":"HGFCADLK","ACDFGIJK":"CGJDAFIK","ACDFGIJL":"CGJDAFLI","ACDFGIKL":"CGIDAFLK","ACDFGJKL":"CGJDAFLK","ACDFHIJK":"HJFCADIK","ACDFHIJL":"HJFCADLI","ACDFHIKL":"HFICADLK","ACDFHJKL":"HJFCADLK","ACDFIJKL":"CJIDAFLK","ACDGHIJK":"HGJCADIK","ACDGHIJL":"HGJCADLI","ACDGHIKL":"HGICADLK","ACDGHJKL":"HGJCADLK","ACDGIJKL":"IGJCADLK","ACDHIJKL":"HJICADLK","ACEFGHIJ":"HGJCAFEI","ACEFGHIK":"HGECAFIK","ACEFGHIL":"HGECAFLI","ACEFGHJK":"HGJCAFEK","ACEFGHJL":"HGJCAFLE","ACEFGHKL":"HGECAFLK","ACEFGIJK":"EGJCAFIK","ACEFGIJL":"EGJCAFLI","ACEFGIKL":"EGICAFLK","ACEFGJKL":"EGJCAFLK","ACEFHIJK":"HJECAFIK","ACEFHIJL":"HJECAFLI","ACEFHIKL":"HEICAFLK","ACEFHJKL":"HJECAFLK","ACEFIJKL":"EJICAFLK","ACEGHIJK":"EGJCAHIK","ACEGHIJL":"EGJCAHLI","ACEGHIKL":"EGICAHLK","ACEGHJKL":"EGJCAHLK","ACEGIJKL":"EJICAGLK","ACEHIJKL":"EJICAHLK","ACFGHIJK":"HGJCAFIK","ACFGHIJL":"HGJCAFLI","ACFGHIKL":"HGICAFLK","ACFGHJKL":"HGJCAFLK","ACFGIJKL":"IGJCAFLK","ACFHIJKL":"HJICAFLK","ACGHIJKL":"HJICAGLK","ADEFGHIJ":"HGJDAFEI","ADEFGHIK":"HGEDAFIK","ADEFGHIL":"HGEDAFLI","ADEFGHJK":"HGJDAFEK","ADEFGHJL":"HGJDAFLE","ADEFGHKL":"HGEDAFLK","ADEFGIJK":"EGJDAFIK","ADEFGIJL":"EGJDAFLI","ADEFGIKL":"EGIDAFLK","ADEFGJKL":"EGJDAFLK","ADEFHIJK":"HJEDAFIK","ADEFHIJL":"HJEDAFLI","ADEFHIKL":"HEIDAFLK","ADEFHJKL":"HJEDAFLK","ADEFIJKL":"EJIDAFLK","ADEGHIJK":"EGJDAHIK","ADEGHIJL":"EGJDAHLI","ADEGHIKL":"EGIDAHLK","ADEGHJKL":"EGJDAHLK","ADEGIJKL":"EJIDAGLK","ADEHIJKL":"EJIDAHLK","ADFGHIJK":"HGJDAFIK","ADFGHIJL":"HGJDAFLI","ADFGHIKL":"HGIDAFLK","ADFGHJKL":"HGJDAFLK","ADFGIJKL":"IGJDAFLK","ADFHIJKL":"HJIDAFLK","ADGHIJKL":"HJIDAGLK","AEFGHIJK":"EGJFAHIK","AEFGHIJL":"EGJFAHLI","AEFGHIKL":"EGIFAHLK","AEFGHJKL":"EGJFAHLK","AEFGIJKL":"EJIFAGLK","AEFHIJKL":"EJIFAHLK","AEGHIJKL":"EJIAHGLK","AFGHIJKL":"HJIFAGLK","BCDEFGHI":"CGBDHFEI","BCDEFGHJ":"HGBCJFDE","BCDEFGHK":"CGBDHFEK","BCDEFGHL":"CGBDHFLE","BCDEFGIJ":"CGBDJFEI","BCDEFGIK":"CGBDEFIK","BCDEFGIL":"CGBDEFLI","BCDEFGJK":"CGBDJFEK","BCDEFGJL":"CGBDJFLE","BCDEFGKL":"CGBDEFLK","BCDEFHIJ":"CJBDHFEI","BCDEFHIK":"CEBDHFIK","BCDEFHIL":"CEBDHFLI","BCDEFHJK":"CJBDHFEK","BCDEFHJL":"CJBDHFLE","BCDEFHKL":"CEBDHFLK","BCDEFIJK":"CJBDEFIK","BCDEFIJL":"CJBDEFLI","BCDEFIKL":"CEBDIFLK","BCDEFJKL":"CJBDEFLK","BCDEGHIJ":"HGBCJDEI","BCDEGHIK":"EGBCHDIK","BCDEGHIL":"EGBCHDLI","BCDEGHJK":"HGBCJDEK","BCDEGHJL":"HGBCJDLE","BCDEGHKL":"EGBCHDLK","BCDEGIJK":"EGBCJDIK","BCDEGIJL":"EGBCJDLI","BCDEGIKL":"EGBCIDLK","BCDEGJKL":"EGBCJDLK","BCDEHIJK":"EJBCHDIK","BCDEHIJL":"EJBCHDLI","BCDEHIKL":"EIBCHDLK","BCDEHJKL":"EJBCHDLK","BCDEIJKL":"EJBCIDLK","BCDFGHIJ":"HGBCJFDI","BCDFGHIK":"CGBDHFIK","BCDFGHIL":"CGBDHFLI","BCDFGHJK":"HGBCJFDK","BCDFGHJL":"CGBDHFLJ","BCDFGHKL":"CGBDHFLK","BCDFGIJK":"CGBDJFIK","BCDFGIJL":"CGBDJFLI","BCDFGIKL":"CGBDIFLK","BCDFGJKL":"CGBDJFLK","BCDFHIJK":"CJBDHFIK","BCDFHIJL":"CJBDHFLI","BCDFHIKL":"CIBDHFLK","BCDFHJKL":"CJBDHFLK","BCDFIJKL":"CJBDIFLK","BCDGHIJK":"HGBCJDIK","BCDGHIJL":"HGBCJDLI","BCDGHIKL":"HGBCIDLK","BCDGHJKL":"HGBCJDLK","BCDGIJKL":"IGBCJDLK","BCDHIJKL":"HJBCIDLK","BCEFGHIJ":"HGBCJFEI","BCEFGHIK":"EGBCHFIK","BCEFGHIL":"EGBCHFLI","BCEFGHJK":"HGBCJFEK","BCEFGHJL":"HGBCJFLE","BCEFGHKL":"EGBCHFLK","BCEFGIJK":"EGBCJFIK","BCEFGIJL":"EGBCJFLI","BCEFGIKL":"EGBCIFLK","BCEFGJKL":"EGBCJFLK","BCEFHIJK":"EJBCHFIK","BCEFHIJL":"EJBCHFLI","BCEFHIKL":"EIBCHFLK","BCEFHJKL":"EJBCHFLK","BCEFIJKL":"EJBCIFLK","BCEGHIJK":"EJBCHGIK","BCEGHIJL":"EJBCHGLI","BCEGHIKL":"EGBCIHLK","BCEGHJKL":"EJBCHGLK","BCEGIJKL":"EJBCIGLK","BCEHIJKL":"EJBCIHLK","BCFGHIJK":"HGBCJFIK","BCFGHIJL":"HGBCJFLI","BCFGHIKL":"HGBCIFLK","BCFGHJKL":"HGBCJFLK","BCFGIJKL":"IGBCJFLK","BCFHIJKL":"HJBCIFLK","BCGHIJKL":"HJBCIGLK","BDEFGHIJ":"HGBDJFEI","BDEFGHIK":"EGBDHFIK","BDEFGHIL":"EGBDHFLI","BDEFGHJK":"HGBDJFEK","BDEFGHJL":"HGBDJFLE","BDEFGHKL":"EGBDHFLK","BDEFGIJK":"EGBDJFIK","BDEFGIJL":"EGBDJFLI","BDEFGIKL":"EGBDIFLK","BDEFGJKL":"EGBDJFLK","BDEFHIJK":"EJBDHFIK","BDEFHIJL":"EJBDHFLI","BDEFHIKL":"EIBDHFLK","BDEFHJKL":"EJBDHFLK","BDEFIJKL":"EJBDIFLK","BDEGHIJK":"EJBDHGIK","BDEGHIJL":"EJBDHGLI","BDEGHIKL":"EGBDIHLK","BDEGHJKL":"EJBDHGLK","BDEGIJKL":"EJBDIGLK","BDEHIJKL":"EJBDIHLK","BDFGHIJK":"HGBDJFIK","BDFGHIJL":"HGBDJFLI","BDFGHIKL":"HGBDIFLK","BDFGHJKL":"HGBDJFLK","BDFGIJKL":"IGBDJFLK","BDFHIJKL":"HJBDIFLK","BDGHIJKL":"HJBDIGLK","BEFGHIJK":"EJBFHGIK","BEFGHIJL":"EJBFHGLI","BEFGHIKL":"EGBFIHLK","BEFGHJKL":"EJBFHGLK","BEFGIJKL":"EJBFIGLK","BEFHIJKL":"EJBFIHLK","BEGHIJKL":"EJIBHGLK","BFGHIJKL":"HJBFIGLK","CDEFGHIJ":"CGJDHFEI","CDEFGHIK":"CGEDHFIK","CDEFGHIL":"CGEDHFLI","CDEFGHJK":"CGJDHFEK","CDEFGHJL":"CGJDHFLE","CDEFGHKL":"CGEDHFLK","CDEFGIJK":"CGEDJFIK","CDEFGIJL":"CGEDJFLI","CDEFGIKL":"CGEDIFLK","CDEFGJKL":"CGEDJFLK","CDEFHIJK":"CJEDHFIK","CDEFHIJL":"CJEDHFLI","CDEFHIKL":"CEIDHFLK","CDEFHJKL":"CJEDHFLK","CDEFIJKL":"CJEDIFLK","CDEGHIJK":"EGJCHDIK","CDEGHIJL":"EGJCHDLI","CDEGHIKL":"EGICHDLK","CDEGHJKL":"EGJCHDLK","CDEGIJKL":"EGICJDLK","CDEHIJKL":"EJICHDLK","CDFGHIJK":"CGJDHFIK","CDFGHIJL":"CGJDHFLI","CDFGHIKL":"CGIDHFLK","CDFGHJKL":"CGJDHFLK","CDFGIJKL":"CGIDJFLK","CDFHIJKL":"CJIDHFLK","CDGHIJKL":"HGICJDLK","CEFGHIJK":"EGJCHFIK","CEFGHIJL":"EGJCHFLI","CEFGHIKL":"EGICHFLK","CEFGHJKL":"EGJCHFLK","CEFGIJKL":"EGICJFLK","CEFHIJKL":"EJICHFLK","CEGHIJKL":"EJICHGLK","CFGHIJKL":"HGICJFLK","DEFGHIJK":"EGJDHFIK","DEFGHIJL":"EGJDHFLI","DEFGHIKL":"EGIDHFLK","DEFGHJKL":"EGJDHFLK","DEFGIJKL":"EGIDJFLK","DEFHIJKL":"EJIDHFLK","DEGHIJKL":"EJIDHGLK","DFGHIJKL":"HGIDJFLK","EFGHIJKL":"EJIFHGLK"};
-let LIVE_ELO=null;
-function baseElo(t){return (LIVE_ELO&&LIVE_ELO[t]!=null)?LIVE_ELO[t]:(ELO[t]||1700);}
-function effElo(t){return baseElo(t)+(HOSTSET.has(t)?70:0);}
-function simLambdas(a,b){const s=(effElo(a)-effElo(b))/245;return [Math.max(.12,(2.65+s)/2),Math.max(.12,(2.65-s)/2)];}
-function samplePois(l){const L=Math.exp(-l);let k=0,p=1;do{k++;p*=Math.random();}while(p>L);return k-1;}
-function eloWinP(a,b){return 1/(1+Math.pow(10,-(effElo(a)-effElo(b))/400));}
-// Elo dinámico: actualiza el Elo de partida con los resultados reales (K conservador + multiplicador por margen de goles)
-function computeLiveElo(){
-  const e={}; for(const t in ELO)e[t]=ELO[t];
-  if(STATE.useDynElo===false) return e;
-  const K=STATE.eloK||20;
-  const played=[];
-  for(const n in DATA.fixtures) if(STATE.results[n]) played.push({n:+n,date:DATA.fixtures[n].date||""});
-  for(const rk in ROUNDS) for(const n of ROUNDS[rk].nums) if(STATE.results[n]) played.push({n,date:(DATA.ko_fix[n]||{}).date||""});
-  played.sort((a,b)=>(a.date).localeCompare(b.date)||a.n-b.n);
-  for(const m of played){
-    const t=teamsOf(m.n); if(!t)continue; const r=STATE.results[m.n]; if(!r||r.h==null||r.a==null)continue;
-    const A=t.home,B=t.away; if(e[A]==null||e[B]==null)continue;
-    const eA=e[A]+(HOSTSET.has(A)?70:0), eB=e[B]+(HOSTSET.has(B)?70:0);
-    const wA=1/(1+Math.pow(10,-(eA-eB)/400));
-    const sA=r.h>r.a?1:(r.h<r.a?0:0.5);
-    const diff=Math.abs(r.h-r.a);
-    const G=diff<=1?1:(diff===2?1.5:(11+diff)/8);
-    const d=K*G*(sA-wA);
-    e[A]+=d; e[B]-=d;
-  }
-  return e;
-}
-function simStandings(S,g){
-  const ms=Object.values(DATA.fixtures).filter(f=>f.g===g);
-  const tab={}; GRP[g].forEach(t=>tab[t]={t,pts:0,gf:0,ga:0});
-  ms.forEach(f=>{const r=S.results[f.n];tab[f.home].gf+=r.h;tab[f.home].ga+=r.a;tab[f.away].gf+=r.a;tab[f.away].ga+=r.h;
-    if(r.h>r.a)tab[f.home].pts+=3;else if(r.a>r.h)tab[f.away].pts+=3;else{tab[f.home].pts++;tab[f.away].pts++;}});
-  const arr=Object.values(tab);arr.forEach(o=>o.gd=o.gf-o.ga);
-  arr.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||Math.random()-.5);
-  return arr;
-}
-function koResult(S,n,home,away){
-  let r=S.results[n];
-  if(!r){const L=simLambdas(home,away);let h=samplePois(L[0]),a=samplePois(L[1]),pw=null;
-    if(h===a)pw=Math.random()<eloWinP(home,away)?"H":"A";
-    r=S.results[n]={h,a,pw};}
-  if(r.h>r.a)return home; if(r.a>r.h)return away; return r.pw==="A"?away:home;
-}
-function simulateOnce(real){
-  const S={results:{},koTeams:{},honorsReal:(real.honorsReal||["","","","","",""]).slice(),names:real.names};
-  for(const n in real.results){const r=real.results[n];S.results[n]={h:r.h,a:r.a,pw:r.pw||null};}
-  for(const n in real.koTeams){const k=real.koTeams[n];if(k&&k.home&&k.away)S.koTeams[n]={home:k.home,away:k.away};}
-  for(const n in DATA.fixtures){const f=DATA.fixtures[n];if(!S.results[n]){const L=simLambdas(f.home,f.away);S.results[n]={h:samplePois(L[0]),a:samplePois(L[1]),pw:null};}}
-  const stand={},W={},R={},thirds=[];
-  for(const g of "ABCDEFGHIJKL"){const a=simStandings(S,g);stand[g]=a.map(o=>o.t);W[g]=a[0].t;R[g]=a[1].t;thirds.push({g,t:a[2].t,pts:a[2].pts,gd:a[2].gd,gf:a[2].gf});}
-  thirds.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||Math.random()-.5);
-  const qg=thirds.slice(0,8).map(o=>o.g).sort().join("");
-  const val=THIRD_COMBO[qg]||""; const asg={};for(let i=0;i<THIRD_COL.length;i++)asg[THIRD_COL[i]]=val[i];
-  const T=col=>{const g=asg[col];return g?stand[g][2]:null;};
-  const M={73:[R.A,R.B],74:[W.E,T("E")],75:[W.F,R.C],76:[W.C,R.F],77:[W.I,T("I")],78:[R.E,R.I],79:[W.A,T("A")],80:[W.L,T("L")],81:[W.D,T("D")],82:[W.G,T("G")],83:[R.K,R.L],84:[W.H,R.J],85:[W.B,T("B")],86:[W.J,R.H],87:[W.K,T("K")],88:[R.D,R.G]};
-  const win={};
-  for(let n=73;n<=88;n++){let t=S.koTeams[n],home,away;if(t){home=t.home;away=t.away;}else{home=M[n][0];away=M[n][1];if(!home||!away){home=home||"?";away=away||"?";}S.koTeams[n]={home,away};}win[n]=koResult(S,n,home,away);}
-  const FD={89:[74,77],90:[73,75],91:[76,78],92:[79,80],93:[83,84],94:[81,82],95:[86,88],96:[85,87],97:[89,90],98:[93,94],99:[91,92],100:[95,96],101:[97,98],102:[99,100]};
-  for(let n=89;n<=102;n++){let t=S.koTeams[n],home,away;if(t){home=t.home;away=t.away;}else{home=win[FD[n][0]];away=win[FD[n][1]];S.koTeams[n]={home,away};}win[n]=koResult(S,n,home,away);}
-  {let t=S.koTeams[104],home,away;if(t){home=t.home;away=t.away;}else{home=win[101];away=win[102];S.koTeams[104]={home,away};}win[104]=koResult(S,104,home,away);}
-  const lo=(n,w)=>{const t=S.koTeams[n];return t.home===w?t.away:t.home;};
-  {let t=S.koTeams[103],home,away;if(t){home=t.home;away=t.away;}else{home=lo(101,win[101]);away=lo(102,win[102]);S.koTeams[103]={home,away};}koResult(S,103,home,away);}
-  return S;
-}
-let PROB_BUSY=false, AUTO_PC=-1;
-function playedCount(){return Object.keys(STATE.results).length;}
-function remainingCount(){let c=0;for(const n in DATA.fixtures)if(!STATE.results[n])c++;for(const rk in ROUNDS)for(const n of ROUNDS[rk].nums)if(!STATE.results[n])c++;return c;}
-function computeProbabilities(nsims,cb,done){
-  if(PROB_BUSY)return; PROB_BUSY=true;
-  LIVE_ELO=computeLiveElo();
-  const real=STATE, pk=PKEYS.slice();
-  const cnt={},sums={}; pk.forEach(k=>{cnt[k]=new Array(pk.length).fill(0);sums[k]=0;});
-  let i=0; const chunk=150;
-  function batch(){
-    const end=Math.min(i+chunk,nsims);
-    for(;i<end;i++){
-      const S=simulateOnce(real);
-      STATE=S; let C; try{C=computeAll();}finally{STATE=real;}
-      const arr=pk.map(k=>({k,t:C[k].total,r:Math.random()})).sort((a,b)=>b.t-a.t||a.r-b.r);
-      arr.forEach((o,idx)=>{cnt[o.k][idx]++;sums[o.k]+=o.t;});
-    }
-    if(cb)cb(i/nsims);
-    if(i<nsims){setTimeout(batch,0);}
-    else{
-      const table=pk.map(k=>({k,name:STATE.names[k]||k,exp:sums[k]/nsims,win:cnt[k][0]/nsims,pod:(cnt[k][0]+cnt[k][1]+cnt[k][2])/nsims,dist:cnt[k].map(c=>+(c/nsims).toFixed(4))}));
-      table.sort((a,b)=>b.exp-a.exp);
-      STATE.probs={at:new Date().toISOString(),n:nsims,played:playedCount(),table};
-      PROB_BUSY=false; if(done)done();
-    }
-  }
-  batch();
-}
-function pct(x){return (x*100).toFixed(x>=.1?0:1)+"%";}
-function runProb(n){
-  const set=t=>{const e=document.getElementById("probProg");if(e)e.textContent=t;};
-  if(PROB_BUSY){set(" (ya calculando…)");return;}
-  set(" calculando…");
-  computeProbabilities(n,f=>set(" calculando… "+Math.round(f*100)+"%"),()=>{ if(!BAKED_MODE&&ADMIN)saveState(false); set(""); render(); });
-}
-function toggleDyn(on){STATE.useDynElo=on;AUTO_PC=-1;if(!BAKED_MODE&&ADMIN)saveState(false);renderEloTable();render();}
-function setK(v){STATE.eloK=Math.max(5,Math.min(60,parseInt(v)||20));AUTO_PC=-1;renderEloTable();}
-function renderEloTable(){
-  const box=document.getElementById("eloTable"); if(!box)return;
-  const live=computeLiveElo();
-  const rows=Object.keys(ELO).map(t=>({t,base:ELO[t],cur:Math.round(live[t]),d:Math.round(live[t]-ELO[t])})).sort((a,b)=>b.cur-a.cur);
-  const anyChg=rows.some(r=>r.d!==0);
-  let html=`<table class="gtable"><tr><th>#</th><th style="text-align:left">Selección</th><th>Partida</th><th>Actual</th><th>Δ</th></tr>`;
-  rows.forEach((r,i)=>{const col=r.d>0?"var(--green)":r.d<0?"var(--red)":"var(--mute)";const sg=r.d>0?"+":"";
-    html+=`<tr><td>${i+1}</td><td style="text-align:left">${esc(r.t)}</td><td style="color:var(--mute)">${r.base}</td><td>${r.cur}</td><td style="color:${col}">${r.d===0?"·":sg+r.d}</td></tr>`;});
-  html+=`</table>`;
-  if(!anyChg) html=`<div class="mute" style="margin-bottom:6px">Aún no hay partidos jugados (o el Elo dinámico está desactivado): el Elo actual coincide con el de partida.</div>`+html;
-  box.innerHTML=html;
-}
-function renderProb(){
-  const box=document.getElementById("probBox"); if(!box)return;
-  const rem=remainingCount(), pc=playedCount(), p=STATE.probs, stale=!p||p.played!==pc;
-  const head=`<div class="dayhead" style="color:var(--amber);margin-top:24px">Clasificación probable · modelo Poisson-Elo</div>`;
-  if(rem===0&&pc>0){box.innerHTML=head+`<div class="note">El torneo ha terminado: la clasificación actual ya es la definitiva.</div>`;return;}
-  if(!p){
-    box.innerHTML=head+`<div class="note">Combina los resultados ya jugados con el modelo Poisson-Elo para estimar en qué puesto acabará cada uno. <button class="btn" onclick="runProb(1500)">Calcular ahora</button><span class="mute" id="probProg"></span></div>`;
-    if(rem>0&&!PROB_BUSY&&AUTO_PC!==pc){AUTO_PC=pc;setTimeout(()=>runProb(1500),250);}
-    return;
-  }
-  let html=head+`<div class="note">${p.n.toLocaleString("es")} simulaciones · ${p.played}/104 partidos jugados${stale?' · <b style="color:var(--amber)">hay resultados nuevos</b>':""}. <button class="btn sec" onclick="runProb(3000)">Recalcular (3000)</button><span class="mute" id="probProg"></span></div>`;
-  html+=`<div style="overflow-x:auto"><table><tr><th>Pos</th><th>Participante</th><th>P(este puesto)</th><th>Ganar</th><th>Podio</th><th>Pts esp.</th><th>Reparto 1º→8º</th></tr>`;
-  p.table.forEach((r,i)=>{
-    const cells=r.dist.map((d,j)=>`<span class="dcell" title="${j+1}º: ${(d*100).toFixed(0)}%" style="opacity:${(0.1+0.9*Math.min(1,d*2.5)).toFixed(2)}">${d>=.005?Math.round(d*100):""}</span>`).join("");
-    html+=`<tr class="${i===0?"first":""}"><td>${i+1}</td><td>${esc(r.name)}</td><td style="color:var(--cyan);font-weight:700">${pct(r.dist[i])}</td><td>${pct(r.win)}</td><td>${pct(r.pod)}</td><td>${r.exp.toFixed(0)}</td><td><div class="dist">${cells}</div></td></tr>`;
-  });
-  html+=`</table></div><div class="mute" style="margin-top:6px">P(este puesto)=probabilidad de acabar exactamente en esa posición. El reparto muestra, de 1º a 8º, la probabilidad (%) de terminar en cada puesto. Las botas/balón se cuentan según lo ya resuelto. Elo dinámico: <b>${STATE.useDynElo===false?"desactivado":"activado (K="+(STATE.eloK||20)+")"}</b>.</div>`;
-  if(stale&&rem>0&&!PROB_BUSY&&AUTO_PC!==pc){AUTO_PC=pc;setTimeout(()=>runProb(1500),250);}
-  box.innerHTML=html;
-}
-
 // ---------- render: partidos ----------
 let FILTER="ALL", ONLYPLAYED=false, CALC=null;
 const PHASELBL={G:"Fase de grupos"};
@@ -736,7 +564,6 @@ function renderRank(){
     html+=`<tr class="${i===0?"first":""}"><td>${i+1}</td><td>${esc(r.name)}<div class="rkbar" style="width:${(r.total/max*100).toFixed(0)}%"></div></td><td>${r.cat.gm}</td><td>${r.cat.pos}</td><td>${r.cat.clas}</td><td>${r.cat.kom}</td><td>${r.cat.pod}</td><td>${r.cat.hon}</td><td class="tot">${r.total}</td></tr>`;
   });
   document.getElementById("rankTable").innerHTML=html;
-  renderProb();
   const played=Object.keys(STATE.results).length;
   document.getElementById("rankNote").innerHTML=`<b>${played}</b> de 104 partidos puntuados. Las categorías <b>Posición</b> (al cerrarse cada grupo), <b>Clasificados</b>, <b>Podio</b> y <b>Botas/Balón</b> se van sumando conforme se conocen.`;
 }
@@ -748,9 +575,6 @@ function unlock(){
 }
 function renderAdmin(){
   if(!ADMIN)return;
-  const dz=document.getElementById("dynElo"); if(dz)dz.checked=STATE.useDynElo!==false;
-  const kz=document.getElementById("eloK"); if(kz)kz.value=STATE.eloK||20;
-  renderEloTable();
   // selector de fase
   const sel=document.getElementById("admPhase");
   if(!sel.options.length){
@@ -871,71 +695,8 @@ async function wipe(){
   await saveState(true);renderAdmin();
 }
 
-// ---------- grupos: clasificación en vivo y puntos teóricos ----------
-function groupTable(g){
-  const ms=Object.values(DATA.fixtures).filter(f=>f.g===g);
-  const tab={}; GRP[g].forEach(t=>tab[t]={t,pj:0,pts:0,gf:0,ga:0});
-  let played=0;
-  ms.forEach(f=>{const r=STATE.results[f.n]; if(!r)return; played++;
-    tab[f.home].pj++;tab[f.away].pj++;
-    tab[f.home].gf+=r.h;tab[f.home].ga+=r.a;tab[f.away].gf+=r.a;tab[f.away].ga+=r.h;
-    if(r.h>r.a)tab[f.home].pts+=3;else if(r.a>r.h)tab[f.away].pts+=3;else{tab[f.home].pts++;tab[f.away].pts++;}});
-  const arr=Object.values(tab);arr.forEach(o=>o.gd=o.gf-o.ga);
-  arr.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||a.t.localeCompare(b.t));
-  return {arr,played,total:ms.length};
-}
-function groupMemberPts(g,order){
-  const out={};
-  for(const k of PKEYS){const P=DATA.players[k];
-    let pos=0; for(let i=0;i<4;i++) if(P.pos[g]&&P.pos[g][i]===order[i]) pos++;
-    let clas=0; for(let i=0;i<2;i++){const t=order[i]; if(P.r32&&P.r32.includes(t)) clas+=CLAS.r32;}
-    out[k]={pos,clas,total:pos+clas};
-  }
-  return out;
-}
-function renderGroups(){
-  const box=document.getElementById("groupsBox"); if(!box)return;
-  const groups=Object.keys(GRP).sort();
-  const agg={}; PKEYS.forEach(k=>agg[k]={pos:0,clas:0,total:0});
-  const perGroup={}; let defCount=0;
-  groups.forEach(g=>{
-    const {arr,played,total}=groupTable(g);
-    const order=arr.map(o=>o.t);
-    const def=played===total;
-    const mp=played>0?groupMemberPts(g,order):null;
-    perGroup[g]={arr,played,total,mp,def};
-    if(def)defCount++;
-    if(mp)PKEYS.forEach(k=>{agg[k].pos+=mp[k].pos;agg[k].clas+=mp[k].clas;agg[k].total+=mp[k].total;});
-  });
-  let html=`<div class="note">Clasificación de cada grupo según los resultados ya jugados, y los <b>puntos teóricos</b> que sumaría cada miembro si esas posiciones fueran definitivas: 1 punto por puesto acertado + ${CLAS.r32} por cada equipo del <b>Top-2</b> que predijo clasificado a dieciseisavos. <b style="color:var(--green)">${defCount}/${groups.length}</b> grupos con clasificación definitiva (todos sus partidos jugados). Las posiciones pueden estar matemáticamente aseguradas antes, pero solo se marcan definitivas al jugarse los 6 partidos.</div>`;
-  const aggArr=PKEYS.map(k=>({k,name:STATE.names[k]||k,...agg[k]})).sort((a,b)=>b.total-a.total);
-  html+=`<div class="dayhead" style="color:var(--amber);margin-top:8px">Puntos teóricos de fase de grupos (total)</div>`;
-  html+=`<div style="overflow-x:auto"><table><tr><th>#</th><th>Miembro</th><th>Posiciones</th><th>Clasificados</th><th>Total</th></tr>`;
-  aggArr.forEach((r,i)=>{html+=`<tr class="${i===0?'first':''}"><td>${i+1}</td><td>${esc(r.name)}</td><td>${r.pos}</td><td>${r.clas}</td><td style="font-weight:700;color:var(--cyan)">${r.total}</td></tr>`;});
-  html+=`</table></div>`;
-  groups.forEach(g=>{
-    const G=perGroup[g];
-    const badge=G.def?`<span class="gbadge def">DEFINITIVA</span>`:`<span class="gbadge prov">PROVISIONAL</span>`;
-    html+=`<div class="gcard"><div class="ghead">Grupo ${g}${badge} <span class="mute" style="font-weight:400;font-size:12px">${G.played}/${G.total} jugados</span></div>`;
-    html+=`<table class="gtable"><tr><th>#</th><th style="text-align:left">Equipo</th><th>PJ</th><th>Pts</th><th>DG</th><th>GF</th></tr>`;
-    G.arr.forEach((o,i)=>{html+=`<tr class="${i<2?'q':''}"><td>${i+1}</td><td style="text-align:left">${esc(o.t)}</td><td>${o.pj}</td><td style="font-weight:700">${o.pts}</td><td>${o.gd>0?'+':''}${o.gd}</td><td>${o.gf}</td></tr>`;});
-    html+=`</table>`;
-    if(G.mp){
-      const ord=PKEYS.map(k=>({k,name:STATE.names[k]||k,...G.mp[k]})).sort((a,b)=>b.total-a.total);
-      html+=`<div class="mute" style="margin:10px 0 4px">Puntos teóricos por miembro en este grupo</div>`;
-      html+=`<table class="gtable"><tr><th style="text-align:left">Miembro</th><th>Pos.</th><th>Clas.</th><th>Total</th></tr>`;
-      ord.forEach(r=>{html+=`<tr><td style="text-align:left">${esc(r.name)}</td><td>${r.pos}</td><td>${r.clas}</td><td style="font-weight:700;color:var(--cyan)">${r.total}</td></tr>`;});
-      html+=`</table>`;
-    } else {
-      html+=`<div class="mute" style="margin-top:10px">Aún sin partidos jugados en este grupo: no hay puntos teóricos todavía.</div>`;
-    }
-    html+=`</div>`;
-  });
-  box.innerHTML=html;
-}
-
 // ---------- general ----------
-function render(){CALC=computeAll();renderMatches();renderRank();renderGroups();setStatus(STORE_OK);}
+function render(){CALC=computeAll();renderMatches();renderRank();setStatus(STORE_OK);}
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("on"));
