@@ -346,7 +346,7 @@ nombre GUILLE Sanctus Guillermus
 Nombre Fran Frank Miunioz
 Nombre Juandi Juan el Dingo
 Nombre Migue Mr. Navajas
-actualizado 28/06/2026 11:38
+actualizado 28/06/2026 11:57
 ===FINEXTRA===
 `;
 
@@ -889,11 +889,12 @@ function groupTable(g){
   arr.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||a.t.localeCompare(b.t));
   return {arr,played,total:ms.length};
 }
-function groupMemberPts(g,order){
+function groupMemberPts(g,order,realR32){
   const out={};
   for(const k of PKEYS){const P=DATA.players[k];
     let pos=0; for(let i=0;i<4;i++) if(P.pos[g]&&P.pos[g][i]===order[i]) pos++;
     let clas=0; for(let i=0;i<2;i++){const t=order[i]; if(P.r32&&P.r32.includes(t)) clas+=CLAS.r32;}
+    if(order[2]&&realR32&&realR32.has(order[2])&&P.r32&&P.r32.includes(order[2])) clas+=CLAS.r32;
     out[k]={pos,clas,total:pos+clas};
   }
   return out;
@@ -903,16 +904,17 @@ function renderGroups(){
   const groups=Object.keys(GRP).sort();
   const agg={}; PKEYS.forEach(k=>agg[k]={pos:0,clas:0,total:0});
   const perGroup={}; let defCount=0;
+  const realR32=roundTeamsReal("R32");
   groups.forEach(g=>{
     const {arr,played,total}=groupTable(g);
     const order=arr.map(o=>o.t);
     const def=played===total;
-    const mp=played>0?groupMemberPts(g,order):null;
+    const mp=played>0?groupMemberPts(g,order,realR32):null;
     perGroup[g]={arr,played,total,mp,def};
     if(def)defCount++;
     if(mp)PKEYS.forEach(k=>{agg[k].pos+=mp[k].pos;agg[k].clas+=mp[k].clas;agg[k].total+=mp[k].total;});
   });
-  let html=`<div class="note">Clasificación de cada grupo según los resultados ya jugados, y los <b>puntos teóricos</b> que sumaría cada miembro si esas posiciones fueran definitivas: 1 punto por puesto acertado + ${CLAS.r32} por cada equipo del <b>Top-2</b> que predijo clasificado a dieciseisavos. <b style="color:var(--green)">${defCount}/${groups.length}</b> grupos con clasificación definitiva (todos sus partidos jugados). Las posiciones pueden estar matemáticamente aseguradas antes, pero solo se marcan definitivas al jugarse los 6 partidos.</div>`;
+  let html=`<div class="note">Clasificación de cada grupo según los resultados ya jugados, y los <b>puntos teóricos</b> que sumaría cada miembro si esas posiciones fueran definitivas: 1 punto por puesto acertado + ${CLAS.r32} por cada equipo clasificado a dieciseisavos que predijo (Top-2 de cada grupo y, si clasificó, el mejor tercero). <b style="color:var(--green)">${defCount}/${groups.length}</b> grupos con clasificación definitiva (todos sus partidos jugados). Las posiciones pueden estar matemáticamente aseguradas antes, pero solo se marcan definitivas al jugarse los 6 partidos.</div>`;
   const aggArr=PKEYS.map(k=>({k,name:STATE.names[k]||k,...agg[k]})).sort((a,b)=>b.total-a.total);
   html+=`<div class="dayhead" style="color:var(--amber);margin-top:8px">Puntos teóricos de fase de grupos (total)</div>`;
   html+=`<div style="overflow-x:auto"><table><tr><th>#</th><th>Miembro</th><th>Posiciones</th><th>Clasificados</th><th>Total</th></tr>`;
