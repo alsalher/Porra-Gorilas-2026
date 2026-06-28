@@ -351,7 +351,7 @@ nombre GUILLE Sanctus Guillermus
 Nombre Fran Frank Miunioz
 Nombre Juandi Juan el Dingo
 Nombre Migue Mr. Navajas
-actualizado 28/06/2026 15:48
+actualizado 28/06/2026 20:55
 ===FINEXTRA===
 `;
 
@@ -438,6 +438,27 @@ function winner(n){
   if(!res||!t) return null;
   if(res.h>res.a) return t.home; if(res.a>res.h) return t.away;
   if(res.pw==="H") return t.home; if(res.pw==="A") return t.away; return null;
+}
+function loser(n){
+  const res=STATE.results[n], t=teamsOf(n);
+  if(!res||!t) return null;
+  if(res.h>res.a) return t.away; if(res.a>res.h) return t.home;
+  if(res.pw==="H") return t.away; if(res.pw==="A") return t.home; return null;
+}
+const KO_FEED={
+  89:["W74","W77"],90:["W73","W75"],91:["W76","W78"],92:["W79","W80"],
+  93:["W83","W84"],94:["W81","W82"],95:["W86","W88"],96:["W85","W87"],
+  97:["W89","W90"],98:["W93","W94"],99:["W91","W92"],100:["W95","W96"],
+  101:["W97","W98"],102:["W99","W100"],103:["L101","L102"],104:["W101","W102"]
+};
+function feedTeam(code){const k=code[0],m=+code.slice(1);return k==="W"?winner(m):k==="L"?loser(m):null;}
+function koResolve(){
+  for(let n=89;n<=104;n++){
+    const f=KO_FEED[n]; if(!f)continue;
+    const a=feedTeam(f[0]), b=feedTeam(f[1]);
+    if(a&&b) STATE.koTeams[n]={home:a,away:b};
+    else delete STATE.koTeams[n];
+  }
 }
 function loserF(){const t=teamsOf(104),w=winner(104);if(!t||!w)return null;return w===t.home?t.away:t.home;}
 function teamsOf(n){
@@ -884,9 +905,12 @@ function importText(text){
       const h=toES(c[iH]),a=toES(c[iA]);
       if(h&&a){const prev=STATE.koTeams[n]||{};if(prev.home!==h||prev.away!==a){STATE.koTeams[n]={home:h,away:a};nTeams++;}}
     }
-    const m=(c[iR]||"").match(/(\d+)\s*[-–]\s*(\d+)/);
-    if(m){const h=+m[1],a=+m[2];const prev=STATE.results[n];
-      if(!prev||prev.h!==h||prev.a!==a){STATE.results[n]={h,a,pw:(prev&&prev.pw)||null};nRes++;}}
+    const rr=(c[iR]||"");
+    const m=rr.match(/(\d+)\s*[-–]\s*(\d+)/);
+    if(m){const h=+m[1],a=+m[2];
+      let pw=null; const pm=rr.match(/pen[^HA]*([HA])/i); if(pm)pw=pm[1].toUpperCase();
+      const prev=STATE.results[n];
+      if(!prev||prev.h!==h||prev.a!==a||prev.pw!==pw){STATE.results[n]={h,a,pw};nRes++;}}
   }
   return{nRes,nTeams};
 }
@@ -994,7 +1018,7 @@ function renderGroups(){
 }
 
 // ---------- general ----------
-function render(){CALC=computeAll();renderMatches();renderRank();renderGroups();setStatus(STORE_OK);}
+function render(){koResolve();CALC=computeAll();renderMatches();renderRank();renderGroups();setStatus(STORE_OK);}
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("on"));
