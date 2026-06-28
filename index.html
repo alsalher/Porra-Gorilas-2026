@@ -84,6 +84,11 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
 .hidden{display:none}
 .gtable{font-size:12px;width:100%;background:transparent;border:none}
+  .kotbl td,.kotbl th{padding:4px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .kotbl .kok{color:var(--green);font-weight:600}
+  .kotbl .komiss{color:var(--gray);font-weight:700}
+  .kotbl tr.kowin td{background:rgba(74,222,128,.08)}
+  .koint{margin-top:8px;font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
 .gcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:12px 0}
 .ghead{font-family:'Saira Condensed';font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
 .gbadge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px}
@@ -346,7 +351,7 @@ nombre GUILLE Sanctus Guillermus
 Nombre Fran Frank Miunioz
 Nombre Juandi Juan el Dingo
 Nombre Migue Mr. Navajas
-actualizado 28/06/2026 11:57
+actualizado 28/06/2026 15:48
 ===FINEXTRA===
 `;
 
@@ -707,6 +712,53 @@ function renderMatches(){
   }
   box.innerHTML=html;
 }
+function koNext(n){
+  if(n>=73&&n<=88) return {key:"r16",pts:CLAS.r16};
+  if(n>=89&&n<=96) return {key:"qf",pts:CLAS.qf};
+  if(n>=97&&n<=100) return {key:"sf",pts:CLAS.sf};
+  if(n===101||n===102) return {key:"fin",pts:CLAS.fin};
+  return null;
+}
+function koGain(P,n,win,lose){
+  const nc=koNext(n);
+  if(nc) return (P[nc.key]&&P[nc.key].includes(win))?nc.pts:0;
+  if(n===104) return (P.podium[0]===win?CLAS.champ:0)+(P.podium[1]===lose?CLAS.sub:0);
+  if(n===103) return (P.podium[2]===win?CLAS.third:0);
+  return 0;
+}
+function koBreakdown(n,t,res){
+  const home=t.home,away=t.away;
+  const win=res?winner(n):null, lose=win?(win===home?away:home):null;
+  let nh=0,ph=0,na=0,pa=0,rows="";
+  for(const k of PKEYS){
+    const P=DATA.players[k], d=CALC[k].per[n]||{};
+    const nmS=esc(shortName(STATE.names[k]||k));
+    const cruceHit=!d.np;
+    const gH=koGain(P,n,home,away), gA=koGain(P,n,away,home);
+    if(gH>0){nh++;ph+=gH;} if(gA>0){na++;pa+=gA;}
+    const cruceCell = cruceHit
+      ? `<span class="kok">\u2713 ${esc(d.pred||"")}</span>`
+      : `<span class="komiss" title="Predijo: ${esc(d.pred||"\u2014")}">\u2717</span>`;
+    let cell,rowcls="";
+    if(res){
+      const kom=cruceHit?(d.pts||0):0, clas=koGain(P,n,win,lose), tot=kom+clas;
+      const parts=[]; if(kom)parts.push("R+"+kom); if(clas)parts.push("C+"+clas);
+      cell = tot>0 ? `<b style="color:var(--green)">+${tot}</b> <span class="mute">${parts.join(" ")}</span>` : `<span class="mute">0</span>`;
+      if(tot>0)rowcls="kowin";
+    } else {
+      const tags=[];
+      if(gH>0)tags.push(`\u2191${esc(home)} <b>+${gH}</b>`);
+      if(gA>0)tags.push(`\u2191${esc(away)} <b>+${gA}</b>`);
+      cell = tags.length?tags.join(' <span class="mute">\u00b7</span> '):`<span class="mute">${cruceHit?"solo resultado":"sin inter\u00e9s"}</span>`;
+    }
+    rows+=`<tr class="${rowcls}"><td style="text-align:left">${nmS}</td><td>${cruceCell}</td><td style="text-align:left">${cell}</td></tr>`;
+  }
+  let agg="";
+  if(!res&&(ph>0||pa>0)){
+    agg=`<div class="koint">Por clasificaci\u00f3n: si gana <b>${esc(home)}</b> \u2192 ${nh} \u00b7 <b>+${ph}</b> &nbsp;|&nbsp; si gana <b>${esc(away)}</b> \u2192 ${na} \u00b7 <b>+${pa}</b></div>`;
+  }
+  return `${agg}<div style="overflow-x:auto"><table class="gtable kotbl"><tr><th style="text-align:left">Miembro</th><th>Cruce</th><th style="text-align:left">${res?"Puntos sumados":"Interés"}</th></tr>${rows}</table></div>`;
+}
 function matchCard(m){
   const n=m.n,t=teamsOf(n),res=STATE.results[n];
   const time=m.date?new Date(m.date).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}):"";
@@ -726,7 +778,7 @@ function matchCard(m){
   return `<div class="match">
     <div class="mtop"><span class="mno">#${n}</span><span class="mlbl">${m.lbl}</span><span class="mwhen">${time}</span></div>
     <div class="mteams"><span class="tname">${esc(home)}</span><span class="score${res?" live":""}">${score}</span><span class="tname away">${esc(away)}</span> ${pens}</div>
-    <div class="preds">${preds}</div>
+    ${(n>=73&&t)?koBreakdown(n,t,res):`<div class="preds">${preds}</div>`}
   </div>`;
 }
 function shortName(s){return s.length>11?s.split(" ")[0].slice(0,11):s;}
