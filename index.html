@@ -89,6 +89,15 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
   .kotbl .komiss{color:var(--gray);font-weight:700}
   .kotbl tr.kowin td{background:rgba(74,222,128,.08)}
   .koint{margin-top:8px;font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+  .awrow{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}
+  .awname{width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .awbarbox{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:6px;height:16px;position:relative;min-width:80px}
+  .awbar{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--amber),#f7d074)}
+  .awbar2{background:linear-gradient(90deg,var(--cyan),#7be8d8)}
+  .awpct{width:52px;text-align:right;font-weight:700}
+  .awdead{color:var(--gray);text-decoration:line-through}
+  .awg{display:inline-block;min-width:18px;text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:0 4px;font-size:11px;margin-left:4px}
+  .awtbl td,.awtbl th{padding:5px 7px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:12px}
 .gcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:12px 0}
 .ghead{font-family:'Saira Condensed';font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
 .gbadge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:4px}
@@ -116,6 +125,7 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
   <button class="tab on" data-p="matches">Partidos</button>
   <button class="tab" data-p="rank">Ranking</button>
   <button class="tab" data-p="groups">Grupos</button>
+  <button class="tab" data-p="awards">Premios</button>
   <button class="tab" data-p="admin">Admin</button>
 </div>
 
@@ -140,6 +150,17 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
 
 <section class="panel" id="p-groups">
   <div id="groupsBox"></div>
+</section>
+
+<section class="panel" id="p-awards">
+  <div class="note" id="awNote"></div>
+  <h2 style="margin:14px 0 6px">Predicciones de los miembros</h2>
+  <div style="overflow-x:auto" id="awPicks"></div>
+  <h2 style="margin:18px 0 6px">🥇 Bota de Oro — probabilidades</h2>
+  <div id="awBota"></div>
+  <h2 style="margin:18px 0 6px">⚽ Balón de Oro — probabilidades</h2>
+  <div id="awBalon"></div>
+  <div class="note" style="margin-top:12px" id="awModel"></div>
 </section>
 
 <section class="panel" id="p-admin">
@@ -351,8 +372,43 @@ nombre GUILLE Sanctus Guillermus
 Nombre Fran Frank Miunioz
 Nombre Juandi Juan el Dingo
 Nombre Migue Mr. Navajas
-actualizado 06/07/2026 07:54
+actualizado 07/07/2026 07:42
 ===FINEXTRA===
+`;
+
+const AWARDS_BAKED = `
+===AWARDS===
+{
+"upd":"07/07/2026",
+"cand":[
+{"n":"Kylian Mbappé","t":"Francia","g":7,"as":2,"pj":5,"r":9.3,"ball":true},
+{"n":"Lionel Messi","t":"Argentina","g":7,"as":0,"pj":5,"r":9.0,"ball":true},
+{"n":"Erling Haaland","t":"Noruega","g":7,"as":0,"pj":4,"r":9.3,"ball":true},
+{"n":"Harry Kane","t":"Inglaterra","g":6,"as":1,"pj":5,"r":8.8,"ball":true},
+{"n":"Ousmane Dembélé","t":"Francia","g":4,"pj":5,"r":8.4,"ball":true},
+{"n":"Mikel Oyarzabal","t":"España","g":4,"as":2,"pj":4,"r":8.4,"ball":true},
+{"n":"Vinícius Júnior","t":"Brasil","g":4,"pj":5,"r":7.8,"ball":true},
+{"n":"Ismaïla Sarr","t":"Senegal","g":4,"pj":5,"r":7.5},
+{"n":"Cristiano Ronaldo","t":"Portugal","g":3,"pj":4,"r":7.7,"ball":true},
+{"n":"Johan Manzambi","t":"Suiza","g":3,"pj":4,"r":7.8},
+{"n":"Folarin Balogun","t":"Estados Unidos","g":3,"pj":4,"r":7.8},
+{"n":"Ismael Saibari","t":"Marruecos","g":3,"pj":5,"r":8.0,"ball":true},
+{"n":"Azzedine Ounahi","t":"Marruecos","g":2,"pj":5,"r":8.1,"ball":true},
+{"n":"Youri Tielemans","t":"Bélgica","g":2,"pj":4,"r":7.9,"ball":true},
+{"n":"Lamine Yamal","t":"España","g":1,"as":1,"pj":4,"r":8.6,"ball":true},
+{"n":"João Neves","t":"Portugal","g":1,"pj":4,"r":7.8,"ball":true},
+{"n":"Romelu Lukaku","t":"Bélgica","g":1,"pj":4,"r":7.2,"ball":true},
+{"n":"Michael Olise","t":"Francia","g":null,"as":5,"pj":5,"r":8.7,"ball":true},
+{"n":"Jude Bellingham","t":"Inglaterra","g":null,"pj":5,"r":8.4,"ball":true},
+{"n":"Martin Ødegaard","t":"Noruega","g":null,"as":3,"pj":5,"r":8.2,"ball":true},
+{"n":"Achraf Hakimi","t":"Marruecos","g":null,"pj":5,"r":8.3,"ball":true},
+{"n":"Kevin De Bruyne","t":"Bélgica","g":null,"pj":4,"r":7.9,"ball":true},
+{"n":"Pedri","t":"España","g":null,"pj":4,"r":8.2,"ball":true},
+{"n":"Vitinha","t":"Portugal","g":null,"pj":4,"r":8.0,"ball":true},
+{"n":"Raphinha","t":"Brasil","g":null,"pj":5,"r":7.3,"ball":true},
+{"n":"Mohamed Salah","t":"Egipto","g":null,"pj":4,"r":7.7,"ball":true}
+]}
+===FINAWARDS===
 `;
 
 // ---------- constantes ----------
@@ -1018,7 +1074,94 @@ function renderGroups(){
 }
 
 // ---------- general ----------
-function render(){koResolve();CALC=computeAll();renderMatches();renderRank();renderGroups();setStatus(STORE_OK);}
+const AWARDS=(()=>{try{return JSON.parse(between(AWARDS_BAKED,"===AWARDS===","===FINAWARDS==="));}catch(e){return{upd:"",cand:[]};}})();
+function awFind(pick){return AWARDS.cand.find(c=>honMatch(pick,c.n))||null;}
+function simAwards(N){
+  const out={fin:{},champ:{},sf:{},mLeft:{},N};
+  for(let i=0;i<N;i++){
+    const S=simulateOnce(STATE);
+    const add={};
+    for(let n=73;n<=104;n++){
+      if(STATE.results[n])continue;
+      const t=S.koTeams[n];if(!t||!t.home||!t.away)continue;
+      add[t.home]=(add[t.home]||0)+1;add[t.away]=(add[t.away]||0)+1;
+    }
+    for(const t in add){if(!out.mLeft[t])out.mLeft[t]=new Array(N).fill(0);out.mLeft[t][i]=add[t];}
+    const f=S.koTeams[104];
+    if(f&&S.results[104]){out.fin[f.home]=(out.fin[f.home]||0)+1;out.fin[f.away]=(out.fin[f.away]||0)+1;
+      const r=S.results[104];const w=r.h>r.a?f.home:(r.a>r.h?f.away:(r.pw==="A"?f.away:f.home));
+      out.champ[w]=(out.champ[w]||0)+1;}
+    for(const n of [101,102]){const k=S.koTeams[n];if(k&&k.home&&k.away){out.sf[k.home]=(out.sf[k.home]||0)+1;out.sf[k.away]=(out.sf[k.away]||0)+1;}}
+  }
+  return out;
+}
+function botaProbs(sim){
+  const cands=AWARDS.cand.filter(c=>(c.g||0)>=1);
+  const wins={},N=sim.N;
+  for(let i=0;i<N;i++){
+    let bg=-1,ba=-1,bw=null;
+    for(const c of cands){
+      const arr=sim.mLeft[c.t];const m=arr?arr[i]:0;
+      const rate=((c.g||0)+0.7)/((c.pj||4)+2);
+      const g=(c.g||0)+(m>0?samplePois(rate*m):0);
+      const as=c.as||0;
+      if(g>bg||(g===bg&&as>ba)||(g===bg&&as===ba&&Math.random()<0.5)){bg=g;ba=as;bw=c.n;}
+    }
+    if(bw)wins[bw]=(wins[bw]||0)+1;
+  }
+  return cands.map(c=>({c,p:(wins[c.n]||0)/N})).sort((a,b)=>b.p-a.p);
+}
+function balonProbs(sim){
+  const cands=AWARDS.cand.filter(c=>c.ball);
+  const N=sim.N,maxG=Math.max(1,...cands.map(c=>c.g||0));
+  let tot=0;
+  const rows=cands.map(c=>{
+    const pSF=(sim.sf[c.t]||0)/N,pF=(sim.fin[c.t]||0)/N,pC=(sim.champ[c.t]||0)/N;
+    const run=0.04+0.9*pSF+1.5*pF+1.5*pC;
+    const qual=Math.exp(((c.r||7.5)-8)/0.7)*(1+0.5*(c.g||0)/maxG);
+    const s=run*qual;tot+=s;
+    return{c,pSF,pF,pC,s};
+  });
+  rows.forEach(r=>r.p=tot>0?r.s/tot:0);
+  return rows.sort((a,b)=>b.p-a.p);
+}
+function awAliveSet(sim){const s=new Set();for(const t in sim.mLeft)s.add(t);return s;}
+function awPickCell(pick,alive,bota){
+  const c=awFind(pick);
+  if(!c)return `<span>${esc(pick)}</span>`;
+  const dead=!alive.has(c.t);
+  const g=(c.g===null||c.g===undefined)?"–":c.g;
+  return `<span class="${dead?'awdead':''}" title="${esc(c.t)}${dead?' · eliminada':''}">${esc(pick)}</span>`+(bota?`<span class="awg" title="goles actuales">${g}</span>`:(dead?'':''));
+}
+function awBars(rows,alive,bota,boxId){
+  const el=document.getElementById(boxId);
+  const top=rows.slice(0,10);
+  el.innerHTML=top.map(r=>{
+    const c=r.c,dead=!alive.has(c.t);
+    const pct=(r.p*100);
+    const extra=bota?`<span class="awg" title="goles">${c.g===null?"–":c.g}</span>`:`<span class="mute" style="font-size:11px">final ${(r.pF*100).toFixed(0)}%</span>`;
+    return `<div class="awrow"><div class="awname ${dead?'awdead':''}" title="${esc(c.t)}">${esc(c.n)} <span class="mute" style="font-size:11px">${esc(c.t)}</span> ${extra}</div>
+      <div class="awbarbox"><div class="awbar ${bota?'':'awbar2'}" style="width:${Math.max(1.5,pct)}%"></div></div>
+      <div class="awpct">${pct<0.5?"<1":pct.toFixed(0)}%</div></div>`;
+  }).join("");
+}
+function renderAwards(){
+  if(!document.getElementById("awPicks"))return;
+  const sim=simAwards(1500);
+  const alive=awAliveSet(sim);
+  document.getElementById("awNote").innerHTML=`Goles y datos de jugadores actualizados a <b>${esc(AWARDS.upd||"?")}</b>. Se refrescan con cada actualización de resultados. Los tachados en gris son jugadores cuya selección ya está eliminada.`;
+  const L=["Bota Oro","Bota Plata","Bota Bronce","Balón Oro","Balón Plata","Balón Bronce"];
+  let rows=PKEYS.map(k=>{
+    const P=DATA.players[k];
+    const cells=P.honors.map((pk,i)=>`<td>${awPickCell(pk,alive,i<3)}</td>`).join("");
+    return `<tr><td style="text-align:left"><b>${esc(shortName(STATE.names[k]||k))}</b></td>${cells}</tr>`;
+  }).join("");
+  document.getElementById("awPicks").innerHTML=`<table class="gtable awtbl"><tr><th style="text-align:left">Miembro</th>${L.map(l=>`<th>${l}</th>`).join("")}</tr>${rows}</table>`;
+  awBars(botaProbs(sim),alive,true,"awBota");
+  awBars(balonProbs(sim),alive,false,"awBalon");
+  document.getElementById("awModel").innerHTML=`<b>Modelo (orientativo):</b> ${sim.N} simulaciones Elo del resto del torneo (mismo motor que Admin). <b>Bota:</b> a cada candidato se le simulan goles extra según su ritmo goleador y los partidos que le queden a su selección en cada simulación; gana el máximo (desempate por asistencias, criterio FIFA). <b>Balón:</b> combina prob. de semis/final/campeón de su selección, goles y una nota editorial de impacto (r). Jugadores con "–" en goles: dato aún sin confirmar.`;
+}
+function render(){koResolve();CALC=computeAll();renderMatches();renderRank();renderGroups();renderAwards();setStatus(STORE_OK);}
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("on"));
