@@ -109,6 +109,17 @@ button.btn.danger{background:rgba(227,106,92,.2);color:#E36A5C;border:1px solid 
 .dcell{width:22px;height:20px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono';font-size:10px;border-radius:3px;background:var(--cyan);color:#081A10}
 .mute{color:var(--mute);font-size:12px}
 @media (max-width:640px){ .tname{font-size:17px} h1{font-size:26px} }
+
+  /* --- celebración campeón --- */
+  .champbanner{display:flex;align-items:center;justify-content:center;gap:16px;margin:6px 0 14px;padding:16px 18px;border-radius:14px;border:1px solid #d4a017;background:linear-gradient(120deg,#3a2c00,#6b4e00 25%,#f4b740 50%,#6b4e00 75%,#3a2c00);background-size:300% 100%;animation:champShimmer 3.5s linear infinite;box-shadow:0 0 24px rgba(244,183,64,.45),inset 0 0 30px rgba(0,0,0,.35)}
+  .champlbl{font-size:11px;letter-spacing:2px;color:#fff3d6;text-align:center;opacity:.85}
+  .champname{font-size:26px;font-weight:900;color:#fff;text-align:center;text-shadow:0 0 14px rgba(255,220,120,.95)}
+  .champpts{text-align:center;color:#ffe9b0;font-weight:700;margin-top:2px}
+  .champcrown{font-size:34px;animation:champBounce 1.6s ease-in-out infinite}
+  .champbanner .champcrown:last-child{animation-delay:.8s}
+  @keyframes champShimmer{0%{background-position:0 0}100%{background-position:300% 0}}
+  @keyframes champBounce{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-7px) rotate(6deg)}}
+  tr.first td{background:rgba(244,183,64,.12);box-shadow:inset 0 0 12px rgba(244,183,64,.15)}
 </style>
 </head>
 <body>
@@ -378,7 +389,7 @@ bota_bronce Jude Bellingham
 balon_oro Rodri
 balon_plata Lionel Messi
 balon_bronce Kylian Mbappé
-actualizado 20/07/2026 12:10
+actualizado 20/07/2026 12:17
 ===FINEXTRA===
 `;
 
@@ -839,14 +850,51 @@ function shortName(s){return s.length>11?s.split(" ")[0].slice(0,11):s;}
 function esc(s){return (s??"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;");}
 
 // ---------- render: ranking ----------
+function tournamentDone(){return !!(STATE.results&&STATE.results[104]);}
+let FW=null;
+function launchFireworks(ms){
+  ms=ms||6500;
+  if(FW)return;FW=true;
+  const cv=document.createElement("canvas");
+  cv.style.cssText="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9999";
+  document.body.appendChild(cv);
+  const ctx=cv.getContext("2d");
+  const DPR=Math.min(2,window.devicePixelRatio||1);
+  const W=cv.width=innerWidth*DPR,H=cv.height=innerHeight*DPR;
+  const rockets=[],sparks=[];
+  const COLS=["#F4B740","#34D8C0","#4ADE80","#ff6b6b","#7aa2ff","#ff9ff3","#ffffff"];
+  function rocket(){rockets.push({x:(0.12+0.76*Math.random())*W,y:H,vy:-(H*(0.011+Math.random()*0.007)),vx:(Math.random()-0.5)*W*0.002,fy:(0.16+Math.random()*0.34)*H,c:COLS[Math.floor(Math.random()*COLS.length)]});}
+  function explode(x,y,c){const n=60+(Math.random()*40|0);for(let i=0;i<n;i++){const a=Math.PI*2*i/n+Math.random()*0.25,s=(1+Math.random()*3.2)*DPR;sparks.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,c:Math.random()<0.25?"#fff":c});}}
+  const t0=performance.now();let last=t0,acc=400;
+  function frame(t){
+    const dt=Math.min(40,t-last);last=t;acc+=dt;const el=t-t0;
+    if(el<ms&&acc>420){acc=0;rocket();if(Math.random()<0.45)rocket();}
+    ctx.globalCompositeOperation="destination-out";ctx.fillStyle="rgba(0,0,0,0.22)";ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation="lighter";
+    for(let i=rockets.length-1;i>=0;i--){const r=rockets[i];r.x+=r.vx*dt/16;r.y+=r.vy*dt/16;
+      ctx.globalAlpha=1;ctx.fillStyle=r.c;ctx.fillRect(r.x,r.y,3*DPR,3*DPR);
+      if(r.y<=r.fy){explode(r.x,r.y,r.c);rockets.splice(i,1);}}
+    for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.vy+=0.05*DPR*dt/16;s.x+=s.vx*dt/16;s.y+=s.vy*dt/16;s.life-=0.012*dt/16;
+      if(s.life<=0){sparks.splice(i,1);continue;}
+      ctx.globalAlpha=Math.max(0,s.life);ctx.fillStyle=s.c;ctx.fillRect(s.x,s.y,2.6*DPR,2.6*DPR);}
+    ctx.globalAlpha=1;
+    if(el<ms||rockets.length||sparks.length)requestAnimationFrame(frame);
+    else{cv.remove();FW=null;}
+  }
+  requestAnimationFrame(frame);
+}
 function renderRank(){
+  const done=tournamentDone();
   const rows=PKEYS.map(k=>({k,name:STATE.names[k]||k,...CALC[k]})).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
   const max=Math.max(1,...rows.map(r=>r.total));
   let html=`<tr><th>#</th><th>Participante</th><th>Partidos</th><th>Posición</th><th>Clasif.</th><th>Elimin.</th><th>Podio</th><th>Botas/Balón</th><th>Total</th></tr>`;
   rows.forEach((r,i)=>{
-    html+=`<tr class="${i===0?"first":""}"><td>${i+1}</td><td>${esc(r.name)}<div class="rkbar" style="width:${(r.total/max*100).toFixed(0)}%"></div></td><td>${r.cat.gm}</td><td>${r.cat.pos}</td><td>${r.cat.clas}</td><td>${r.cat.kom}</td><td>${r.cat.pod}</td><td>${r.cat.hon}</td><td class="tot">${r.total}</td></tr>`;
+    html+=`<tr class="${i===0?"first":""}"><td>${i+1}</td><td>${i===0&&done?"\ud83d\udc51 ":""}${esc(r.name)}<div class="rkbar" style="width:${(r.total/max*100).toFixed(0)}%"></div></td><td>${r.cat.gm}</td><td>${r.cat.pos}</td><td>${r.cat.clas}</td><td>${r.cat.kom}</td><td>${r.cat.pod}</td><td>${r.cat.hon}</td><td class="tot">${r.total}</td></tr>`;
   });
   document.getElementById("rankTable").innerHTML=html;
+  let bb=document.getElementById("champBanner");
+  if(!bb){bb=document.createElement("div");bb.id="champBanner";const rt=document.getElementById("rankTable");rt.parentNode.insertBefore(bb,rt);}
+  bb.innerHTML=(done&&rows.length)?`<div class="champbanner"><div class="champcrown">\ud83c\udf86</div><div><div class="champlbl">CAMPE\u00d3N DE LA PORRA \u00b7 MUNDIAL 2026</div><div class="champname">\ud83c\udfc6 ${esc(rows[0].name)} \ud83c\udfc6</div><div class="champpts">${rows[0].total} puntos</div></div><div class="champcrown">\ud83e\udd8d</div></div>`:"";
   renderProb();
   const played=Object.keys(STATE.results).length;
   document.getElementById("rankNote").innerHTML=`<b>${played}</b> de 104 partidos puntuados. Las categorías <b>Posición</b> (al cerrarse cada grupo), <b>Clasificados</b>, <b>Podio</b> y <b>Botas/Balón</b> se van sumando conforme se conocen.`;
@@ -1143,6 +1191,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("on"));
   t.classList.add("on");document.getElementById("p-"+t.dataset.p).classList.add("on");
+  if(t.dataset.p==="rank"&&tournamentDone())launchFireworks();
 });
 buildFilters();render();loadState();
 </script>
